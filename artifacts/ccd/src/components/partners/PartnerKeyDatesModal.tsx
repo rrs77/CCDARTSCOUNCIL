@@ -103,7 +103,7 @@ export function PartnerKeyDatesModal({
           style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}
         >
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#002D24]/70">
+            <p className="text-[13px] font-semibold uppercase tracking-wide text-[#002D24]/70">
               Populate with key dates from
             </p>
             <h3
@@ -178,11 +178,11 @@ export function PartnerKeyDatesModal({
                                   {item.title}
                                 </span>
                                 {item.keyStage !== 'All' && (
-                                  <span className="rounded bg-[#002D24]/8 px-1.5 py-0.5 text-[10px] font-semibold text-[#002D24]">
+                                  <span className="rounded bg-[#002D24]/8 px-1.5 py-0.5 text-[13px] font-semibold text-[#002D24]">
                                     {item.keyStage}
                                   </span>
                                 )}
-                                <span className="rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-medium text-teal-800">
+                                <span className="rounded bg-teal-50 px-1.5 py-0.5 text-[13px] font-medium text-teal-800">
                                   {keyDateKindLabel(item.kind)}
                                 </span>
                               </span>
@@ -191,12 +191,12 @@ export function PartnerKeyDatesModal({
                                 {item.venue ? ` · ${item.venue}` : ''}
                               </span>
                               {item.description ? (
-                                <span className="mt-1 block text-[11px] leading-snug text-gray-500">
+                                <span className="mt-1 block text-[13px] leading-snug text-gray-500">
                                   {item.description}
                                 </span>
                               ) : null}
                               {checked ? (
-                                <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#002D24]">
+                                <span className="mt-1.5 inline-flex items-center gap-1 text-[13px] font-medium text-[#002D24]">
                                   <Bell className="h-3 w-3" />
                                   Remind me to go
                                 </span>

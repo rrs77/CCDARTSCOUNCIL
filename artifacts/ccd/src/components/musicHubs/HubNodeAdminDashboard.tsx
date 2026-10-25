@@ -170,7 +170,7 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#E8F0EA]/70 via-gray-50 to-gray-50">
       <div className="border-b border-[#002D24]/10 bg-white/90">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-none flex-wrap items-center justify-between gap-2 px-3 py-3 sm:px-4 lg:px-6 xl:px-8">
           <button
             type="button"
             onClick={() => backToCCDesigner('our-partners')}
@@ -196,9 +196,9 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-none space-y-4 px-3 py-6 sm:px-4 lg:px-6 xl:px-8">
         <header className="rounded-xl border border-[#002D24]/12 bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#002D24]/55">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#002D24]/55">
             Hub admin
           </p>
           <div className="mt-1 flex flex-wrap items-start justify-between gap-3">
@@ -211,7 +211,7 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
                 />
               ) : (
                 <div className="flex h-14 w-28 items-center justify-center rounded-lg border border-dashed border-[#002D24]/25 bg-[#E8F0EA]/40">
-                  <span className="text-[10px] font-medium text-[#002D24]/50">No logo</span>
+                  <span className="text-[13px] font-medium text-[#002D24]/50">No logo</span>
                 </div>
               )}
               <div>

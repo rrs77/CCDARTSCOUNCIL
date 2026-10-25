@@ -550,7 +550,7 @@ export function UnitViewer({ initialHalfTermId = null, hidePageChrome = false }:
   if (selectedUnit) {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#F9FAFB' }}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="mx-auto w-full max-w-none px-3 sm:px-4 md:px-6 lg:px-8 xl:px-8 py-4 sm:py-6 md:py-8">
           {/* Unit Header */}
           <div className="bg-white rounded-card shadow-soft border border-gray-200 overflow-hidden mb-6">
             <div 
@@ -1014,11 +1014,11 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
         {!hidePageChrome && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="text-[12px] font-extrabold text-[#1F1B4D]">
+            <span className="text-[13px] font-extrabold text-[#1F1B4D]">
               {currentSheetInfo.display || currentSheetInfo.sheet}
             </span>
-            <span className="text-[12px] text-[#77738F]">·</span>
-            <span className="text-[12px] font-extrabold text-[#1F1B4D]">
+            <span className="text-[13px] text-[#77738F]">·</span>
+            <span className="text-[13px] font-extrabold text-[#1F1B4D]">
               {currentAcademicYear.replace('-', '–')}
             </span>
             {(() => {
@@ -1027,7 +1027,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
               const year = now.getFullYear();
               const currentSchoolYear = month >= 8 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
               return currentAcademicYear === currentSchoolYear ? (
-                <span className="rounded-md bg-[#FFF1C2] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#1F1B4D]">
+                <span className="rounded-md bg-[#FFF1C2] px-1.5 py-0.5 text-[13px] font-extrabold uppercase tracking-wide text-[#1F1B4D]">
                   Current
                 </span>
               ) : null;
@@ -1066,7 +1066,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
             <button
               type="button"
               onClick={() => setShowTermCopyModal(true)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#FFC93C] px-2.5 text-[12px] font-extrabold text-[#1F1B4D] hover:brightness-95"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#FFC93C] px-2.5 text-[13px] font-extrabold text-[#1F1B4D] hover:brightness-95"
             >
               <Calendar className="h-3.5 w-3.5" />
               Copy term
@@ -1076,7 +1076,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
               placeholder="Search…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 w-[9.5rem] rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[12px] text-[#1F1B4D] placeholder:text-[#9CA3AF] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+              className="h-8 w-[9.5rem] rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[13px] text-[#1F1B4D] placeholder:text-[#9CA3AF] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
             />
           </div>
         </div>
@@ -1087,7 +1087,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
             <button
               type="button"
               onClick={() => setShowTermCopyModal(true)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#FFC93C] px-2.5 text-[12px] font-extrabold text-[#1F1B4D] hover:brightness-95"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#FFC93C] px-2.5 text-[13px] font-extrabold text-[#1F1B4D] hover:brightness-95"
             >
               <Calendar className="h-3.5 w-3.5" />
               Copy term
@@ -1097,21 +1097,21 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
               placeholder="Search…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 w-[9.5rem] rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[12px] text-[#1F1B4D] placeholder:text-[#9CA3AF] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+              className="h-8 w-[9.5rem] rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[13px] text-[#1F1B4D] placeholder:text-[#9CA3AF] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
             />
           </div>
         )}
 
           {focusedHalfTermId && (
             <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-[#E9E6FF] bg-[#F4F3FA] px-3 py-2">
-              <div className="flex min-w-0 items-center gap-2 text-[12px] text-[#1F1B4D]">
+              <div className="flex min-w-0 items-center gap-2 text-[13px] text-[#1F1B4D]">
                 <Eye className="h-3.5 w-3.5 shrink-0 text-[#4338E8]" />
                 <span className="truncate font-semibold">Focused on {TERM_NAMES[focusedHalfTermId]}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setFocusedHalfTermId(null)}
-                className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold text-[#4338E8] hover:bg-white"
+                className="shrink-0 rounded-lg px-2 py-1 text-[13px] font-bold text-[#4338E8] hover:bg-white"
               >
                 Show all
               </button>

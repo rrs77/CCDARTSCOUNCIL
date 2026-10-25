@@ -192,7 +192,7 @@ export function ForumAdminPage({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <span
-                    className={`mr-2 rounded px-1.5 py-0.5 text-[11px] uppercase ${
+                    className={`mr-2 rounded px-1.5 py-0.5 text-[13px] uppercase ${
                       r.is_safeguarding
                         ? 'bg-red-100 text-red-800'
                         : 'bg-gray-100 text-gray-700'

@@ -105,7 +105,7 @@ export function RecentlyAddedActivitiesPanel({
             <li key={key} className="relative">
               {isStarred && (
                 <span
-                  className="absolute right-2 top-2 z-10 inline-flex items-center gap-0.5 rounded bg-[#A3E635] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#002D24]"
+                  className="absolute right-2 top-2 z-10 inline-flex items-center gap-0.5 rounded bg-[#A3E635] px-1.5 py-0.5 text-[13px] font-bold uppercase tracking-wide text-[#002D24]"
                   title="Partner highlight"
                 >
                   <Star className="h-3 w-3 fill-current" aria-hidden />
@@ -120,7 +120,7 @@ export function RecentlyAddedActivitiesPanel({
                 isStarred={isStarred}
                 onStarToggle={() => onStarToggle(activity)}
               />
-              <p className="mt-1 px-1 text-[11px] font-medium text-[#3F6212]">
+              <p className="mt-1 px-1 text-[13px] font-medium text-[#3F6212]">
                 {entry.partnerLabel}
               </p>
             </li>

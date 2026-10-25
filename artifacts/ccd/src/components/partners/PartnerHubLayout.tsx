@@ -163,7 +163,7 @@ export function PartnerHubResourceRow({
     <li className="flex h-full flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="min-w-0 flex-1">
         {eyebrow && (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-gray-500">
             {eyebrow}
           </p>
         )}

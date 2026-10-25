@@ -107,12 +107,12 @@ export function ForumHome({
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium text-gray-900">{c.title}</span>
-                      <span className="inline-flex items-center gap-1 rounded bg-[#e8f2ef] px-1.5 py-0.5 text-[11px] uppercase tracking-wide text-[#005a50]">
+                      <span className="inline-flex items-center gap-1 rounded bg-[#e8f2ef] px-1.5 py-0.5 text-[13px] uppercase tracking-wide text-[#005a50]">
                         {scopeIcon(c.scope)}
                         {c.scope}
                       </span>
                       {c.status !== 'published' && canModerate && (
-                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] uppercase text-amber-800">
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[13px] uppercase text-amber-800">
                           {c.status}
                         </span>
                       )}
@@ -169,7 +169,7 @@ export function ForumHome({
                 <div>
                   <div className="font-medium text-gray-900">
                     {t.is_pinned && (
-                      <span className="mr-2 text-[11px] font-semibold uppercase text-[#4338E8]">
+                      <span className="mr-2 text-[13px] font-semibold uppercase text-[#4338E8]">
                         Pinned
                       </span>
                     )}

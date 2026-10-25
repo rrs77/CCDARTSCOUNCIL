@@ -41,10 +41,10 @@ export function ResourceZoneHubPage({ hub, content }: ResourceZoneHubPageProps) 
     <div className="min-h-screen bg-white text-gray-900">
       {/* Compact accessibility strip */}
       <div
-        className="border-b border-white/15 px-3 py-2 text-[11px] text-white sm:px-4"
+        className="border-b border-white/15 px-3 py-2 text-[13px] text-white sm:px-4"
         style={{ backgroundColor: band }}
       >
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
+        <div className="mx-auto flex w-full max-w-none flex-wrap items-center justify-between gap-2">
           <nav aria-label="Skip links" className="flex flex-wrap gap-x-2 gap-y-1">
             <a href="#resource-zone-content" className="underline-offset-2 hover:underline">
               Skip to Content
@@ -71,7 +71,7 @@ export function ResourceZoneHubPage({ hub, content }: ResourceZoneHubPageProps) 
         id="resource-zone-nav"
         className="border-b border-gray-200 bg-white"
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex w-full max-w-none items-center justify-between gap-3 px-3 py-3 sm:px-4 lg:px-6 xl:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -119,7 +119,7 @@ export function ResourceZoneHubPage({ hub, content }: ResourceZoneHubPageProps) 
         aria-label="Breadcrumb"
         className="border-b border-gray-100 bg-white"
       >
-        <ol className="mx-auto flex max-w-6xl flex-wrap items-center gap-1.5 px-4 py-2.5 text-sm text-gray-600 sm:px-6">
+        <ol className="mx-auto flex w-full max-w-none flex-wrap items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 sm:px-4 lg:px-6 xl:px-8">
           <li>
             <button
               type="button"
@@ -193,7 +193,7 @@ export function ResourceZoneHubPage({ hub, content }: ResourceZoneHubPageProps) 
       {/* Dark Resource Zone */}
       <section
         id="resource-zone-content"
-        className="px-4 py-10 text-white sm:px-6 sm:py-14"
+        className="px-3 py-10 text-white sm:px-4 sm:py-14 lg:px-6 xl:px-8"
         style={{ backgroundColor: band }}
       >
         <div className="mx-auto max-w-3xl text-center">
@@ -206,11 +206,11 @@ export function ResourceZoneHubPage({ hub, content }: ResourceZoneHubPageProps) 
         </div>
 
         {content.hubLinks && content.hubLinks.length > 0 ? (
-          <div className="mx-auto mt-10 max-w-3xl">
+          <div className="mx-auto mt-10 w-full max-w-none">
             <h2 className="text-center text-lg font-semibold text-white/95">
               {content.hubLinksHeading ?? 'Explore our resource hubs'}
             </h2>
-            <ul className="mt-5 space-y-4">
+            <ul className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
               {content.hubLinks.map((item) => (
                 <li
                   key={item.href + item.title}
@@ -219,7 +219,7 @@ export function ResourceZoneHubPage({ hub, content }: ResourceZoneHubPageProps) 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       {item.kind ? (
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                        <p className="text-[13px] font-semibold uppercase tracking-wider text-white/60">
                           {item.kind}
                         </p>
                       ) : null}
@@ -245,11 +245,11 @@ export function ResourceZoneHubPage({ hub, content }: ResourceZoneHubPageProps) 
           </div>
         ) : null}
 
-        <div className="mx-auto mt-12 max-w-3xl">
+        <div className="mx-auto mt-12 w-full max-w-none">
           <h2 className="text-center text-lg font-semibold text-white/95">
             {content.resourcesHeading ?? 'Download our free resources'}
           </h2>
-          <ul className="mt-5 space-y-4">
+          <ul className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
             {content.downloads.map((item) => (
               <li
                 key={item.href + item.title}
@@ -258,7 +258,7 @@ export function ResourceZoneHubPage({ hub, content }: ResourceZoneHubPageProps) 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     {item.kind ? (
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                      <p className="text-[13px] font-semibold uppercase tracking-wider text-white/60">
                         {item.kind}
                       </p>
                     ) : null}

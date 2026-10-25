@@ -41,7 +41,7 @@ export function PartnerHubContactFooter({
         )}
         {info.fax && (
           <li className="flex items-center gap-2 text-gray-600">
-            <span className="w-3.5 shrink-0 text-center text-[10px] font-semibold text-gray-400">
+            <span className="w-3.5 shrink-0 text-center text-[13px] font-semibold text-gray-400">
               Fax
             </span>
             <span>{info.fax}</span>

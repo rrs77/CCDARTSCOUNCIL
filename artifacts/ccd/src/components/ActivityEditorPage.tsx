@@ -536,7 +536,7 @@ export function ActivityEditorPage({
       .slice(0, 4);
   }, [form.custom_objective_ids, objectiveMeta]);
 
-  const fieldLab = 'mb-1.5 flex items-center gap-1.5 text-[12px] font-bold text-[#3b3960]';
+  const fieldLab = 'mb-1.5 flex items-center gap-1.5 text-[13px] font-bold text-[#3b3960]';
 
   return (
     <div
@@ -547,13 +547,13 @@ export function ActivityEditorPage({
     >
       {/* Top bar — page header when library chrome is hidden */}
       <header className="z-10 flex shrink-0 flex-wrap items-center gap-2 border-b border-[#E2E0EF] bg-white px-4 py-2.5 sm:px-5">
-        <div className="inline-flex max-w-[min(100%,16rem)] items-center gap-1.5 truncate rounded-lg border border-[#E2E0EF] bg-[#F4F3FA] px-2.5 py-1.5 text-[12px] font-bold text-[#1F1B4D]">
-          <span className="rounded-md bg-[#E9E6FF] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#4338E8]">
+        <div className="inline-flex max-w-[min(100%,16rem)] items-center gap-1.5 truncate rounded-lg border border-[#E2E0EF] bg-[#F4F3FA] px-2.5 py-1.5 text-[13px] font-bold text-[#1F1B4D]">
+          <span className="rounded-md bg-[#E9E6FF] px-1.5 py-0.5 text-[13px] font-extrabold uppercase tracking-wide text-[#4338E8]">
             {stageLabel}
           </span>
           <span className="truncate">{currentSheetInfo?.display || 'Class'}</span>
         </div>
-        <div className="text-[12px] font-semibold text-[#77738F]">
+        <div className="text-[13px] font-semibold text-[#77738F]">
           Activity library /{' '}
           <strong className="text-[#1F1B4D]">
             {mode === 'create' ? 'New activity' : 'Edit activity'}
@@ -561,7 +561,7 @@ export function ActivityEditorPage({
         </div>
         <div className="grow" />
         <div
-          className={`inline-flex min-w-[6.5rem] items-center gap-1 text-[12px] font-semibold ${
+          className={`inline-flex min-w-[6.5rem] items-center gap-1 text-[13px] font-semibold ${
             draftStatus === 'saved' ? 'text-[#16a34a]' : 'text-[#77738F]'
           }`}
           aria-live="polite"
@@ -572,21 +572,21 @@ export function ActivityEditorPage({
         <button
           type="button"
           onClick={onCancel}
-          className="inline-flex h-9 items-center rounded-xl px-3 text-[12px] font-bold text-[#77738F] hover:bg-[#F4F3FA] hover:text-[#1F1B4D]"
+          className="inline-flex h-9 items-center rounded-xl px-3 text-[13px] font-bold text-[#77738F] hover:bg-[#F4F3FA] hover:text-[#1F1B4D]"
         >
           Cancel
         </button>
         <button
           type="button"
           onClick={() => void handleDraftClick()}
-          className="inline-flex h-9 items-center rounded-xl border border-[#E2E0EF] bg-white px-3 text-[12px] font-bold text-[#1F1B4D] hover:border-[#bcb7f4]"
+          className="inline-flex h-9 items-center rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-bold text-[#1F1B4D] hover:border-[#bcb7f4]"
         >
           Save draft
         </button>
         <button
           type="button"
           onClick={() => void handleCreateOrSave()}
-          className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3.5 text-[12px] font-extrabold text-white shadow-[0_3px_10px_rgba(79,70,229,0.25)] hover:bg-[#3529d1]"
+          className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3.5 text-[13px] font-extrabold text-white shadow-[0_3px_10px_rgba(79,70,229,0.25)] hover:bg-[#3529d1]"
         >
           <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
           {mode === 'create' ? 'Create activity' : 'Save changes'}
@@ -594,12 +594,12 @@ export function ActivityEditorPage({
       </header>
 
       {/* Two-column body: left scrolls; right column sticky with Details scrolling alone */}
-      <div className="mx-auto grid min-h-0 w-full max-w-[1400px] flex-1 grid-cols-1 gap-5 overflow-y-auto p-4 min-[1101px]:grid-cols-[minmax(0,1fr)_384px] min-[1101px]:overflow-hidden min-[1101px]:p-5">
+      <div className="mx-auto grid min-h-0 w-full max-w-none flex-1 grid-cols-1 gap-5 overflow-y-auto p-4 min-[1101px]:grid-cols-[minmax(0,1fr)_384px] min-[1101px]:overflow-hidden min-[1101px]:p-5">
           {/* Left main card */}
           <div className="min-h-0 min-[1101px]:overflow-y-auto">
           <section className="flex flex-col gap-6 rounded-2xl border border-[#E2E0EF] bg-white p-6 shadow-[0_8px_30px_rgba(31,27,77,0.06)] sm:p-8">
             <div>
-              <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#77738F]">
+              <p className="mb-2 text-[13px] font-extrabold uppercase tracking-[0.08em] text-[#77738F]">
                 {mode === 'create' ? 'New activity' : 'Edit activity'}
               </p>
               <input
@@ -621,7 +621,7 @@ export function ActivityEditorPage({
                 <b className="font-bold text-[#55537a]">Required</b>
               </p>
               {errors.activity && (
-                <p className="mt-1 text-[12px] font-semibold text-red-500">{errors.activity}</p>
+                <p className="mt-1 text-[13px] font-semibold text-red-500">{errors.activity}</p>
               )}
             </div>
 
@@ -655,7 +655,7 @@ export function ActivityEditorPage({
                 <div className="grow" />
                 <button
                   type="button"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 text-[12px] font-bold text-[#4338E8]"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 text-[13px] font-bold text-[#4338E8]"
                   title="Coming soon"
                   disabled
                 >
@@ -687,12 +687,12 @@ export function ActivityEditorPage({
                   Resources
                 </h4>
                 {attachedResources.length > 0 && (
-                  <span className="text-[12px] font-semibold text-[#9a98b8]">
+                  <span className="text-[13px] font-semibold text-[#9a98b8]">
                     {attachedResources.length} attached
                   </span>
                 )}
                 <div className="grow" />
-                <span className="text-[12px] font-semibold text-[#9a98b8]">
+                <span className="text-[13px] font-semibold text-[#9a98b8]">
                   Drag files here or paste a link
                 </span>
               </div>
@@ -716,7 +716,7 @@ export function ActivityEditorPage({
                           backgroundPosition: 'center',
                         }}
                       >
-                        <span className="absolute left-2 top-2 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#1F1B4D]">
+                        <span className="absolute left-2 top-2 rounded-md bg-white/90 px-1.5 py-0.5 text-[13px] font-extrabold uppercase tracking-wide text-[#1F1B4D]">
                           {visual.label}
                         </span>
                         <button
@@ -737,14 +737,14 @@ export function ActivityEditorPage({
                         <div className="truncate text-[12.5px] font-bold text-[#1F1B4D]">
                           {resourceDisplayName(url, visual.label)}
                         </div>
-                        <div className="truncate text-[11px] font-medium text-[#9a98b8]">
+                        <div className="truncate text-[13px] font-medium text-[#9a98b8]">
                           {resourceMeta(res.key, url)}
                         </div>
                         <input
                           type="url"
                           value={url}
                           onChange={(e) => setResource(res.key, e.target.value)}
-                          className="h-7 w-full rounded-md border border-[#E2E0EF] px-2 text-[11px] text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none"
+                          className="h-7 w-full rounded-md border border-[#E2E0EF] px-2 text-[13px] text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none"
                           placeholder={`${visual.label} URL`}
                           dir="ltr"
                         />
@@ -765,7 +765,7 @@ export function ActivityEditorPage({
                             RESOURCE_VISUALS.link.gradient,
                         }}
                       >
-                        <span className="absolute left-2 top-2 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
+                        <span className="absolute left-2 top-2 rounded-md bg-white/90 px-1.5 py-0.5 text-[13px] font-extrabold uppercase tracking-wide">
                           {RESOURCE_VISUALS[editingResourceKey]?.label || 'Resource'}
                         </span>
                       </div>
@@ -779,7 +779,7 @@ export function ActivityEditorPage({
                             const v = (form[editingResourceKey as keyof EditorActivity] as string) || '';
                             if (!v.trim()) setEditingResourceKey(null);
                           }}
-                          className="h-8 w-full rounded-md border border-[#E2E0EF] px-2 text-[12px] focus:border-[#4338E8] focus:outline-none"
+                          className="h-8 w-full rounded-md border border-[#E2E0EF] px-2 text-[13px] focus:border-[#4338E8] focus:outline-none"
                           placeholder="Paste URL…"
                           dir="ltr"
                         />
@@ -818,7 +818,7 @@ export function ActivityEditorPage({
                           <button
                             key={opt.key}
                             type="button"
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
                             onClick={() => {
                               setAddMenuOpen(false);
                               if (opt.key === 'imageLink') {
@@ -862,9 +862,9 @@ export function ActivityEditorPage({
           {/* Right column: sticky as a whole; preview stays visible; Details scrolls */}
           <aside className="flex min-h-0 flex-col gap-4 self-stretch max-[1100px]:max-h-none max-[1100px]:overflow-visible min-[1101px]:overflow-hidden">
             <div className="shrink-0 rounded-2xl border border-[#e4e2fb] bg-gradient-to-br from-[#eef2ff] to-[#faf5ff] p-4 shadow-[0_8px_30px_rgba(31,27,77,0.05)]">
-              <div className="mb-2.5 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.06em] text-[#6366f1]">
+              <div className="mb-2.5 flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-[0.06em] text-[#6366f1]">
                 Live preview
-                <span className="ml-auto text-[11px] font-semibold normal-case tracking-normal text-[#9a98b8]">
+                <span className="ml-auto text-[13px] font-semibold normal-case tracking-normal text-[#9a98b8]">
                   How it appears in your library
                 </span>
               </div>
@@ -906,7 +906,7 @@ export function ActivityEditorPage({
                   />
                 </div>
                 {errors.category && (
-                  <p className="mt-1 text-[11px] text-red-500">{errors.category}</p>
+                  <p className="mt-1 text-[13px] text-red-500">{errors.category}</p>
                 )}
               </div>
 
@@ -988,7 +988,7 @@ export function ActivityEditorPage({
                 <div className="space-y-2.5">
                   {yearGroupBuckets.map((bucket) => (
                     <div key={bucket.id} className="min-w-0">
-                      <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-wide text-[#77738F]">
+                      <p className="mb-1.5 text-[13px] font-extrabold uppercase tracking-wide text-[#77738F]">
                         {bucket.label}
                       </p>
                       <div className="flex max-w-full flex-wrap gap-1.5">
@@ -1008,7 +1008,7 @@ export function ActivityEditorPage({
                                 }))
                               }
                               aria-pressed={selected}
-                              className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold leading-tight ${
+                              className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-semibold leading-tight ${
                                 selected
                                   ? 'border-[#a5b4fc] bg-[#eef2ff] text-[#3730a3]'
                                   : 'border-[#e3e2ee] bg-white text-[#55537a]'
@@ -1020,7 +1020,7 @@ export function ActivityEditorPage({
                               />
                               <span className="min-w-0 truncate">{group.name}</span>
                               {selected ? (
-                                <span className="shrink-0 text-[11px] font-extrabold text-[#4338E8]">
+                                <span className="shrink-0 text-[13px] font-extrabold text-[#4338E8]">
                                   ✓
                                 </span>
                               ) : null}
@@ -1032,7 +1032,7 @@ export function ActivityEditorPage({
                   ))}
                 </div>
                 {errors.yearGroups && (
-                  <p className="mt-1 text-[11px] text-red-500">{errors.yearGroups}</p>
+                  <p className="mt-1 text-[13px] text-red-500">{errors.yearGroups}</p>
                 )}
               </div>
 
@@ -1057,14 +1057,14 @@ export function ActivityEditorPage({
                         <b className="mt-0.5 shrink-0 rounded-md bg-[#e0e7ff] px-1.5 py-0.5 text-[10.5px] font-extrabold text-[#4338E8]">
                           {obj.code}
                         </b>
-                        <div className="text-[12px] font-medium leading-snug text-[#4b4970]">
+                        <div className="text-[13px] font-medium leading-snug text-[#4b4970]">
                           {obj.text}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[12px] font-medium text-[#9a98b8]">No objectives selected</p>
+                  <p className="text-[13px] font-medium text-[#9a98b8]">No objectives selected</p>
                 )}
               </div>
 
@@ -1074,7 +1074,7 @@ export function ActivityEditorPage({
                   {parseTopics(form.unitName).map((topic) => (
                     <span
                       key={topic}
-                      className="inline-flex h-[26px] items-center gap-1 rounded-full bg-[#f1f0f7] pl-2.5 pr-1.5 text-[12px] font-semibold text-[#3b3960]"
+                      className="inline-flex h-[26px] items-center gap-1 rounded-full bg-[#f1f0f7] pl-2.5 pr-1.5 text-[13px] font-semibold text-[#3b3960]"
                     >
                       {topic}
                       <button
@@ -1097,12 +1097,12 @@ export function ActivityEditorPage({
                       }
                     }}
                     placeholder="Add topic…"
-                    className="min-w-[6rem] flex-1 border-0 bg-transparent px-1 text-[12px] font-medium text-[#1F1B4D] outline-none placeholder:text-[#9a98b8] focus:ring-0"
+                    className="min-w-[6rem] flex-1 border-0 bg-transparent px-1 text-[13px] font-medium text-[#1F1B4D] outline-none placeholder:text-[#9a98b8] focus:ring-0"
                   />
                 </div>
               </div>
 
-              <div className="mt-auto flex items-center gap-2.5 rounded-xl bg-[#f8f8fc] px-3 py-3 text-[12px] font-medium text-[#6b6990]">
+              <div className="mt-auto flex items-center gap-2.5 rounded-xl bg-[#f8f8fc] px-3 py-3 text-[13px] font-medium text-[#6b6990]">
                 <FolderOpen className="h-4 w-4 shrink-0" />
                 <div>
                   Will be saved to{' '}

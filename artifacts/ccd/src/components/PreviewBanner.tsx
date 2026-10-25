@@ -46,7 +46,7 @@ export function PreviewBanner() {
       aria-label="Preview mode notice"
       className="fixed top-0 left-0 right-0 z-[55] w-full border-b border-indigo-300/40 bg-gradient-to-r from-indigo-900 via-violet-900 to-indigo-900 text-white shadow-lg"
     >
-      <div className="mx-auto flex max-w-screen-2xl flex-col gap-2.5 px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:px-6 md:py-2.5">
+      <div className="mx-auto flex w-full max-w-none flex-col gap-2.5 px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:px-4 lg:px-6 xl:px-8 md:py-2.5">
         <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center sm:gap-3">
           <span className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-3 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">
             <Eye className="h-3.5 w-3.5" />

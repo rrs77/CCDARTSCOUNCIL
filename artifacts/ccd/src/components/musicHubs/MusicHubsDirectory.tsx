@@ -34,7 +34,7 @@ export function MusicHubsDirectory() {
   return (
     <section aria-labelledby="music-hubs-directory-heading" className="space-y-6">
       <div className="mb-1">
-        <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/65">
+        <p className="inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/65">
           <Music2 className="h-3.5 w-3.5" aria-hidden />
           Partner Hubs
         </p>
@@ -94,7 +94,7 @@ export function MusicHubsDirectory() {
 
       {featured && (
         <div>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/65">
+          <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/65">
             Featured partner
           </p>
           <FeaturedMusicHubCard node={featured} />
@@ -102,7 +102,7 @@ export function MusicHubsDirectory() {
       )}
 
       <div>
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/65">
+        <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/65">
           Explore by area
         </p>
         <ul className="space-y-1" aria-label="UK countries">
@@ -208,7 +208,7 @@ function FeaturedMusicHubCard({ node }: { node: MusicHubDirectoryNode }) {
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/50">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/50">
             Featured partner
           </p>
           <h3 className="mt-0.5 text-base font-semibold text-[#002D24] sm:text-lg">
@@ -286,7 +286,7 @@ function RegionAccordionRow({
         )}
         <span className="min-w-0 flex-1 text-sm font-semibold text-[#002D24]">{node.name}</span>
         {node.status === 'coming-soon' && (
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[#002D24]/45">
+          <span className="text-[13px] font-semibold uppercase tracking-wide text-[#002D24]/45">
             Soon
           </span>
         )}

@@ -13,7 +13,7 @@ export function PrototypeNoticeBar() {
         fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)",
       }}
     >
-      <p className="max-w-5xl text-center text-[12px] font-semibold leading-snug text-[#1F1B4D] sm:text-[13px] sm:leading-relaxed">
+      <p className="max-w-5xl text-center text-[13px] font-semibold leading-snug text-[#1F1B4D] sm:text-[13px] sm:leading-relaxed">
         {PROTOTYPE_NOTICE}
       </p>
     </div>

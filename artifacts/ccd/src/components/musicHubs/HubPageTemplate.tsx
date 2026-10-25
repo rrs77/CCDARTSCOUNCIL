@@ -250,7 +250,7 @@ export function HubPageTemplate({
     node.kind === 'district' || node.kind === 'borough';
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-none space-y-5 px-3 py-6 sm:px-4 lg:px-6 xl:px-8">
       <nav aria-label="Breadcrumb" className="overflow-x-auto">
         <ol className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-[#002D24]/65 sm:text-sm">
           {crumbs.map((crumb, i) => {
@@ -350,7 +350,7 @@ export function HubPageTemplate({
                 </div>
               ) : canEdit ? (
                 <div className="relative flex h-16 w-28 shrink-0 items-center justify-center rounded-lg border border-dashed border-[#002D24]/25 bg-[#E8F0EA]/40">
-                  <span className="px-2 text-center text-[10px] font-medium text-[#002D24]/50">
+                  <span className="px-2 text-center text-[13px] font-medium text-[#002D24]/50">
                     No logo
                   </span>
                   <div className="absolute -right-2 -top-2">
@@ -360,7 +360,7 @@ export function HubPageTemplate({
               ) : null}
               <div className="min-w-0">
                 {isComingSoon && (
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#002D24]/55">
+                  <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#002D24]/55">
                     Hub page coming soon
                   </p>
                 )}

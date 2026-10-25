@@ -54,7 +54,7 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
           background: `linear-gradient(115deg, ${bandColor} 0%, ${bandColor} 58%, ${hub.accentColor}55 100%)`,
         }}
       >
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-9">
+        <div className="mx-auto flex w-full max-w-none flex-col gap-5 px-3 py-6 sm:px-4 sm:py-8 lg:px-6 xl:px-8 lg:py-9">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
@@ -95,7 +95,7 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
                 />
               </div>
               <div className="min-w-0 text-white">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">
+                <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/70">
                   {hub.paid ? 'Paid Partner Hub' : 'Partner Hub'} · /{hub.slug}
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
@@ -105,7 +105,7 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
                   <p className="mt-1.5 text-sm text-white/85 sm:text-base">{hub.tagline}</p>
                 )}
                 {hub.paid && (
-                  <p className="mt-2 inline-flex rounded bg-[#A3E635] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#002D24]">
+                  <p className="mt-2 inline-flex rounded bg-[#A3E635] px-2 py-0.5 text-[13px] font-bold uppercase tracking-wide text-[#002D24]">
                     Paid resources · demo basket
                   </p>
                 )}
@@ -126,7 +126,7 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto w-full max-w-none px-3 py-6 sm:px-4 sm:py-8 lg:px-6 xl:px-8">
         {canManageHub && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#002D24]/15 bg-white px-4 py-3 shadow-sm">
             <p className="flex items-center gap-2 text-sm text-[#002D24]">

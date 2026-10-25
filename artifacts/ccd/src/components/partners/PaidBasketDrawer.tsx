@@ -30,7 +30,7 @@ export function PaidBasketDrawer() {
       <aside className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white shadow-2xl">
         <header className="flex items-center justify-between border-b border-[#002D24]/10 px-4 py-4 sm:px-5">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/55">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/55">
               Demo basket
             </p>
             <h2 className="text-lg font-semibold text-[#002D24]">
@@ -69,7 +69,7 @@ export function PaidBasketDrawer() {
                   className="flex gap-3 rounded-xl border border-gray-200 bg-[#E8F0EA]/40 p-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#002D24]/55">
+                    <p className="text-[13px] font-semibold uppercase tracking-wide text-[#002D24]/55">
                       {product.partnerName}
                     </p>
                     <h3 className="mt-0.5 text-sm font-semibold leading-snug text-gray-900">
@@ -142,7 +142,7 @@ export function PaidBasketButton({ className = '' }: { className?: string }) {
       <ShoppingBag className="h-4 w-4" aria-hidden />
       Basket
       {itemCount > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#A3E635] px-1 text-[11px] font-bold text-[#002D24]">
+        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#A3E635] px-1 text-[13px] font-bold text-[#002D24]">
           {itemCount}
         </span>
       )}

@@ -86,7 +86,7 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
     <div className={embedded ? '' : 'min-h-screen bg-[#f4f7f6]'}>
       <ForumSeoHead route={route} />
       <header className="border-b border-[#d5e0dc] bg-[#1F1B4D] text-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+        <div className="mx-auto flex w-full max-w-none flex-wrap items-center justify-between gap-3 px-3 sm:px-4 lg:px-6 xl:px-8 py-4">
           <div className="flex items-center gap-3">
             {!embedded && (
               <a
@@ -147,7 +147,7 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto w-full max-w-none px-3 sm:px-4 lg:px-6 xl:px-8 py-6">
         {route.name === 'home' && (
           <ForumHome requireSignIn={requireSignIn} navigate={navigateForum} />
         )}

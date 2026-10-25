@@ -1030,7 +1030,7 @@ export function UserManagement() {
         <p className="font-extrabold text-[#1F1B4D]">Could not load users</p>
         <p className="mt-1 text-[13px] font-medium text-[#5C5878]">{loadError}</p>
         {isNetwork ? (
-          <p className="mx-auto mt-2 max-w-md text-[12px] leading-relaxed text-[#5C5878]">
+          <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-[#5C5878]">
             The Users admin needs the local API on port 8080 (Vite proxies{' '}
             <code className="rounded bg-white px-1">/api</code> there). Start it with{' '}
             <code className="rounded bg-white px-1">PORT=8080 pnpm --filter @workspace/api-server run dev</code>
@@ -1040,7 +1040,7 @@ export function UserManagement() {
         <button
           type="button"
           onClick={() => void reload()}
-          className="mt-4 inline-flex h-9 items-center rounded-xl bg-[#4338E8] px-4 text-[12px] font-extrabold text-white hover:bg-[#3529d1]"
+          className="mt-4 inline-flex h-9 items-center rounded-xl bg-[#4338E8] px-4 text-[13px] font-extrabold text-white hover:bg-[#3529d1]"
         >
           Try again
         </button>
@@ -1237,15 +1237,15 @@ export function UserManagement() {
                   aria-label="Select all on page"
                 />
               </th>
-              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Name</th>
-              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Email</th>
-              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Role</th>
-              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">School</th>
-              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Classes</th>
-              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Status</th>
-              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Last active</th>
-              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Created</th>
-              <th className="px-3 py-3 text-right text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Actions</th>
+              <th className="px-3 py-3 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">Name</th>
+              <th className="px-3 py-3 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">Email</th>
+              <th className="px-3 py-3 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">Role</th>
+              <th className="px-3 py-3 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">School</th>
+              <th className="px-3 py-3 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">Classes</th>
+              <th className="px-3 py-3 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">Status</th>
+              <th className="px-3 py-3 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">Last active</th>
+              <th className="px-3 py-3 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">Created</th>
+              <th className="px-3 py-3 text-right text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E2E0EF]">
@@ -1272,7 +1272,7 @@ export function UserManagement() {
                   <td className="px-3 py-2.5 text-[13px] font-medium text-[#5C5878]">{user.email ?? '—'}</td>
                   <td className="px-3 py-2.5">
                     <span
-                      className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-bold ${roleBadgeClass(user.role as ProfileRole)}`}
+                      className={`inline-flex rounded-md border px-2 py-0.5 text-[13px] font-bold ${roleBadgeClass(user.role as ProfileRole)}`}
                     >
                       {roleLabel(user.role as ProfileRole)}
                     </span>
@@ -1280,20 +1280,20 @@ export function UserManagement() {
                   <td className="max-w-[9rem] truncate px-3 py-2.5 text-[13px] font-medium text-[#5C5878]" title={user.school_or_org || undefined}>
                     {user.school_or_org || '—'}
                   </td>
-                  <td className="max-w-[8rem] truncate px-3 py-2.5 text-[12px] font-medium text-[#5C5878]" title={(user.allowed_year_groups || []).join(', ')}>
+                  <td className="max-w-[8rem] truncate px-3 py-2.5 text-[13px] font-medium text-[#5C5878]" title={(user.allowed_year_groups || []).join(', ')}>
                     {classesLabel(user)}
                   </td>
                   <td className="px-3 py-2.5">
                     <span
-                      className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-bold ${invitationBadgeClass(user)}`}
+                      className={`inline-flex rounded-md border px-2 py-0.5 text-[13px] font-bold ${invitationBadgeClass(user)}`}
                     >
                       {invitationLabel(user)}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 text-[12px] text-[#77738F]">
+                  <td className="px-3 py-2.5 text-[13px] text-[#77738F]">
                     {formatDate(user.updated_at)}
                   </td>
-                  <td className="px-3 py-2.5 text-[12px] text-[#77738F]">
+                  <td className="px-3 py-2.5 text-[13px] text-[#77738F]">
                     {formatDate(user.created_at)}
                   </td>
                   <td className="px-3 py-2.5 text-right">

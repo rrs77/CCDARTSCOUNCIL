@@ -65,7 +65,7 @@ export function ImportantDatesPanel({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-[#002D24]">Important dates</p>
-          <p className="text-[11px] text-gray-600">
+          <p className="text-[13px] text-gray-600">
             {withReminder.length} reminder{withReminder.length === 1 ? '' : 's'} · partner key
             dates
           </p>
@@ -92,7 +92,7 @@ export function ImportantDatesPanel({
                   <span className="flex flex-wrap items-center gap-1.5">
                     <span className="text-sm font-medium text-[#002D24]">{d.title}</span>
                     {d.keyStage !== 'All' && (
-                      <span className="rounded bg-[#002D24]/8 px-1.5 py-0.5 text-[10px] font-semibold text-[#002D24]">
+                      <span className="rounded bg-[#002D24]/8 px-1.5 py-0.5 text-[13px] font-semibold text-[#002D24]">
                         {d.keyStage}
                       </span>
                     )}
@@ -102,7 +102,7 @@ export function ImportantDatesPanel({
                     {keyDateKindLabel(d.kind)}
                   </span>
                   {d.attendReminder ? (
-                    <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-teal-800">
+                    <span className="mt-1 inline-flex items-center gap-1 text-[13px] font-medium text-teal-800">
                       <Bell className="h-3 w-3" />
                       Remind me to go
                     </span>

@@ -14,7 +14,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-none px-3 sm:px-4 lg:px-6 xl:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <button
@@ -35,7 +35,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
 
       {/* Navigation Tabs */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-none px-3 sm:px-4 lg:px-6 xl:px-8">
           <nav className="flex space-x-8">
             <button
               onClick={() => setActiveTab('objectives')}
@@ -53,7 +53,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto w-full max-w-none px-3 sm:px-4 lg:px-6 xl:px-8 py-8">
         {activeTab === 'objectives' && (
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

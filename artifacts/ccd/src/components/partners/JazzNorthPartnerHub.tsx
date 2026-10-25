@@ -115,7 +115,7 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
                   Hosted at{' '}
-                  <code className="rounded bg-white/80 px-1 text-[11px] text-gray-700">
+                  <code className="rounded bg-white/80 px-1 text-[13px] text-gray-700">
                     {JAZZ_NORTH_DREAMHOST_BASE_USED}
                   </code>
                 </p>

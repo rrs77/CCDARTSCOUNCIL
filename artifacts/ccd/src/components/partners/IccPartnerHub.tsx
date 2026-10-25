@@ -169,7 +169,7 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
         className="rounded-2xl border border-[#A3E635]/60 bg-[#F7FEE7]/70 px-5 py-5 sm:px-6"
         aria-labelledby="icc-paid-heading"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#3F6212]">
+        <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#3F6212]">
           Paid course example
         </p>
         <h3 id="icc-paid-heading" className="mt-1 text-lg font-semibold text-gray-900 sm:text-xl">

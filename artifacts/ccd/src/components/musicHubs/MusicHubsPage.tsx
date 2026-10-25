@@ -37,7 +37,7 @@ export function MusicHubsPage({
   if (!path) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#E8F0EA]/80 via-gray-50 to-gray-50">
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-none px-3 py-6 sm:px-4 lg:px-6 xl:px-8">
           <button
             type="button"
             onClick={() => backToCCDesigner('our-partners')}
@@ -77,7 +77,7 @@ export function MusicHubsPage({
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#E8F0EA]/60 via-gray-50 to-gray-50">
       <div className="border-b border-[#002D24]/10 bg-white/80">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-none flex-wrap items-center justify-between gap-2 px-3 py-3 sm:px-4 lg:px-6 xl:px-8">
           <button
             type="button"
             onClick={() => backToCCDesigner('our-partners')}

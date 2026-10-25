@@ -124,7 +124,7 @@ export function GreaterEssexRegionNav({
                       {hub.note}
                     </span>
                   )}
-                  <span className="mt-2 inline-block rounded-md bg-[#330968]/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#330968]">
+                  <span className="mt-2 inline-block rounded-md bg-[#330968]/10 px-2 py-0.5 text-[13px] font-semibold uppercase tracking-wide text-[#330968]">
                     You are here
                   </span>
                 </span>

@@ -110,7 +110,7 @@ export function MusicHubResourceList({
                 {resource.description && (
                   <p className="mt-0.5 text-xs text-[#002D24]/65">{resource.description}</p>
                 )}
-                <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#002D24]/55">
+                <p className="mt-1 text-[13px] font-semibold uppercase tracking-[0.1em] text-[#002D24]/55">
                   {resource.access}
                   {resource.providedBy ? ` · ${resource.providedBy}` : ''}
                 </p>
