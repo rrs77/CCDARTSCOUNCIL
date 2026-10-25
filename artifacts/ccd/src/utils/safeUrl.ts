@@ -7,7 +7,9 @@ const SAFE_URL_PATTERN = /^(https?:\/\/|\/(?![/\\])|\.\/|#)/i;
 
 export function sanitizeUrl(url: string): string {
   if (!url) return '#';
-  const trimmed = String(url).trim();
+  // Browsers drop tab/newline/control chars from URLs ('/\t/evil.com' is read as '//evil.com'),
+  // so strip them before testing and return the cleaned string.
+  const trimmed = String(url).replace(/[\u0000-\u001f\u007f]/g, '').trim();
   if (SAFE_URL_PATTERN.test(trimmed)) return trimmed;
   return '#';
 }

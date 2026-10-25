@@ -117,6 +117,12 @@ describe('sanitizeUrl', () => {
       assert.equal(sanitizeUrl(bad), '#', bad);
     }
   });
+  it('strips control characters first (browsers drop tab/newline from URLs)', () => {
+    for (const bad of ['/\t/evil.com', '/\n/evil.com', '\t//evil.com', '/\r\n/evil.com', '/\u0000/evil.com', '/\u007f/evil.com', 'java\tscript:alert(1)']) {
+      assert.equal(sanitizeUrl(bad), '#', JSON.stringify(bad));
+    }
+    assert.equal(sanitizeUrl('/less\tons/1'), '/lessons/1', 'returns the cleaned string');
+  });
   it('keeps http(s), same-origin paths, ./ and #', () => {
     for (const ok of ['https://a.example/x', 'http://a.example', '/lessons/1', './x', '#top']) assert.equal(sanitizeUrl(ok), ok, ok);
   });
