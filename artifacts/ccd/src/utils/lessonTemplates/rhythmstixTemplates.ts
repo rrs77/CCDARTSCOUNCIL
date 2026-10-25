@@ -1,3 +1,4 @@
+import { PLAN_FOOTER_SITE, PLAN_LOGO_PRINT_CSS, planFooterCopyright, planLogoHtml } from '../planLogo.ts';
 /**
  * Rhythmstix age-phase lesson plan templates (EYFS → KS5).
  *
@@ -757,13 +758,11 @@ export function escapeText(s: unknown): string {
     .replace(/'/g, '&#39;');
 }
 
-/** CCDesigner logo (same artwork as utils/planLogo.ts) when no logo markup is passed in. Never a Rhythmstix mark. */
-export const DEFAULT_LOGO_HTML =
-  '<img class="ccd-plan-logo" src="/ccdesigner-logo.png" alt="CCDesigner" width="141" height="40" style="display:block;height:40px;width:141px">';
-
-/** Plan footer (Rob, 25 Oct 2026: "change it to CCDesigner"). Site as used in the app (FeatureWalkthroughModal SITE_URL). */
-export const PLAN_FOOTER_COPYRIGHT = (year: number = new Date().getFullYear()) => `© CCDesigner ${year}`;
-export const PLAN_FOOTER_SITE = 'www.ccdesigner.co.uk';
+/** CCDesigner colour logo (utils/planLogo.ts, embedded data: URI) when no logo markup is passed in. Never a Rhythmstix mark. */
+export const DEFAULT_LOGO_HTML = planLogoHtml(40);
+/** Plan footer (Rob, 25 Oct 2026: "change it to CCDesigner"); shared with utils/planLogo.ts. */
+export const PLAN_FOOTER_COPYRIGHT = planFooterCopyright;
+export { PLAN_FOOTER_SITE };
 
 export interface RenderOptions {
   /** Sanitiser for teacher-authored rich HTML (DOMPurify in the app). Defaults to escaping. */
@@ -793,6 +792,7 @@ export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string 
 .rx-doc a{color:var(--rx-teal);font-weight:700}
 .rx-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--rx-gold);padding-bottom:10px;margin-bottom:14px}
 .rx-logo-slot{min-height:40px;min-width:160px;display:flex;align-items:center}
+${PLAN_LOGO_PRINT_CSS}
 .rx-phase{font-size:13px;font-weight:700;color:var(--rx-accent);text-transform:uppercase;text-align:right}
 .rx-kicker{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--rx-accent);text-transform:uppercase;margin:0 0 4px}
 .rx-title{font-size:30px;font-weight:800;line-height:1.15;margin:0}

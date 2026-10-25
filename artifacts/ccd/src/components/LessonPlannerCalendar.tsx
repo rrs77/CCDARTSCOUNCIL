@@ -1046,7 +1046,7 @@ export function LessonPlannerCalendar({
 
     // CCDesigner logo top-left on a white tab so it reads on the teal band
     // (replaces the old "CCD" letter disc).
-    const logoHtml = `<div style="display:inline-block;background:#fff;border-radius:8px;padding:6px 10px;margin-bottom:10px;">${planLogoHtml(28)}</div>`;
+    const logoHtml = `<div style="display:inline-block;background:#fff;border-radius:8px;padding:6px 10px;margin-bottom:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${planLogoHtml(28)}</div>`;
     const brandHeader = `
       <div class="brand-header">
         ${logoHtml}

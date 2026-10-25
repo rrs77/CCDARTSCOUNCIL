@@ -1,4 +1,4 @@
-import { planLogoHtml } from './planLogo.ts';
+import { PLAN_LOGO_PRINT_CSS, planLogoHtml } from './planLogo.ts';
 import { escapeHtmlText as esc } from './escapeHtml.ts';
 import { safeColour } from './safeColour.ts';
 
@@ -35,6 +35,7 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
       <meta charset="UTF-8">
       <title>Class Timetable - ${safeClassName}</title>
       <style>
+        ${PLAN_LOGO_PRINT_CSS}
         /* Utilities used below, inlined so the page never waits on a CDN (was the Tailwind CDN script). */
         body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#111827}
         .flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}

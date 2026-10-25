@@ -1,4 +1,4 @@
-import { PLAN_LOGO_ALT, PLAN_LOGO_PATH } from '../utils/planLogo';
+import { PLAN_LOGO_ALT, PLAN_LOGO_DATA_URI, PLAN_LOGO_HEIGHT_PX, planLogoWidthFor } from '../utils/planLogo';
 import React from 'react';
 import { Calendar, Clock, X, Eye, ArrowLeft, ArrowRight, Star } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
@@ -76,11 +76,19 @@ export function HalfTermView({
             {/* Print-only header */}
             <div className="hidden print:block text-center border-b border-gray-200 pb-4 mb-6">
               <img
-                src={PLAN_LOGO_PATH}
+                src={PLAN_LOGO_DATA_URI}
                 alt={PLAN_LOGO_ALT}
-                width={106}
-                height={30}
-                className="mx-auto mb-3 block h-[30px] w-auto"
+                width={planLogoWidthFor(PLAN_LOGO_HEIGHT_PX)}
+                height={PLAN_LOGO_HEIGHT_PX}
+                data-ccd-plan-logo="colour"
+                className="ccd-plan-logo mb-3 block"
+                style={{
+                  height: PLAN_LOGO_HEIGHT_PX,
+                  width: planLogoWidthFor(PLAN_LOGO_HEIGHT_PX),
+                  filter: 'none',
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact',
+                }}
               />
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 {currentSheetInfo.display} Half-Term Plan

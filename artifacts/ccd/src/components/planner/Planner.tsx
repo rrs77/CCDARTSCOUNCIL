@@ -1,4 +1,4 @@
-import { PLAN_LOGO_ALT, PLAN_LOGO_PATH, planLogoUrl } from '../../utils/planLogo';
+import { PLAN_LOGO_ALT, PLAN_LOGO_PATH, PLAN_LOGO_PRINT_CSS, planLogoHtml, planLogoUrl } from '../../utils/planLogo';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { safeColour } from '../../utils/safeColour';
 import { toast } from 'react-hot-toast';
@@ -688,7 +688,7 @@ body{
   -webkit-print-color-adjust:exact;print-color-adjust:exact;
   position:relative;min-height:100%;
 }
-.plan-logo{display:block;height:30px;width:auto;margin:0 0 6px}
+.plan-logo{display:block;margin:0 0 6px}${PLAN_LOGO_PRINT_CSS}
 .sheet{position:relative;z-index:1;padding:4px 6px 0}
 .mast{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:4px 0 10px;border-bottom:1.5px solid #E2E0EF}
 .mast-left{min-width:0}
@@ -722,7 +722,7 @@ body{
 <div class="sheet">
   <header class="mast">
     <div class="mast-left">
-      <img class="plan-logo" src="${esc(absLogo)}" alt="CCDesigner">
+      <div class="plan-logo">${planLogoHtml(30)}</div>
       <p class="eyebrow">${esc(eyebrow)}</p>
       <h1>${esc(rangeLabel)}</h1>
       <p class="range">${esc(productName)}${productSubtitle ? ` · ${esc(productSubtitle)}` : ''}</p>

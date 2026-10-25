@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { templatePreviewDoc } from './templatePreviewDoc.ts';
+import { htmlHasColourPlanLogo } from '../planLogo.ts';
 import { RHYTHMSTIX_TEMPLATES, buildRhythmstixDoc, renderRhythmstixHtml } from './rhythmstixTemplates.ts';
 
 const lesson = {
@@ -30,7 +31,8 @@ describe('logo', () => {
   it('every template shows the CCDesigner logo and never a Rhythmstix logo or wordmark', () => {
     for (const t of RHYTHMSTIX_TEMPLATES) {
       const html = renderRhythmstixHtml(buildRhythmstixDoc(lesson, { templateId: t.id }));
-      assert.match(html, /data-logo-slot="top-left"><img class="ccd-plan-logo" src="\/ccdesigner-logo.png" alt="CCDesigner"/, t.id);
+      assert.ok(/data-logo-slot="top-left"><img class="ccd-plan-logo" data-ccd-plan-logo="colour" src="data:image\/png;base64,/.test(html), t.id);
+      assert.ok(htmlHasColourPlanLogo(html), t.id);
       assert.doesNotMatch(html, /rx-wordmark|R H Y T H M S T I X|RHYTHMSTIX/, t.id);
     }
   });

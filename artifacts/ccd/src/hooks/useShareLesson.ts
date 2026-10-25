@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { planLogoHtml } from '../utils/planLogo';
+import { PLAN_LOGO_PRINT_CSS, planLogoHtml } from '../utils/planLogo';
 import { escapeHtmlText, sanitizeHtml, sanitizeUrl } from '../utils/sanitize';
 import { safeColour } from '../utils/safeColour';
 
@@ -155,6 +155,7 @@ export function useShareLesson() {
         <meta charset="UTF-8">
         <title>${escapeShareText(lessonTitle)}</title>
         <style>
+          ${PLAN_LOGO_PRINT_CSS}
           /* Utilities used below, inlined so the page never waits on a CDN. */
           .flex{display:flex}.grid{display:grid}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
           .gap-2{gap:8px}.items-start{align-items:flex-start}.items-center{align-items:center}
