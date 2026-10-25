@@ -757,10 +757,18 @@ export function escapeText(s: unknown): string {
     .replace(/'/g, '&#39;');
 }
 
+/** CCDesigner logo (same artwork as utils/planLogo.ts) when no logo markup is passed in. Never a Rhythmstix mark. */
+export const DEFAULT_LOGO_HTML =
+  '<img class="ccd-plan-logo" src="/ccdesigner-logo.png" alt="CCDesigner" width="141" height="40" style="display:block;height:40px;width:141px">';
+
+/** Plan footer (Rob, 25 Oct 2026: "change it to CCDesigner"). Site as used in the app (FeatureWalkthroughModal SITE_URL). */
+export const PLAN_FOOTER_COPYRIGHT = (year: number = new Date().getFullYear()) => `© CCDesigner ${year}`;
+export const PLAN_FOOTER_SITE = 'www.ccdesigner.co.uk';
+
 export interface RenderOptions {
   /** Sanitiser for teacher-authored rich HTML (DOMPurify in the app). Defaults to escaping. */
   sanitizeHtml?: (html: string) => string;
-  /** Trusted logo markup for the top-left slot (planLogoHtml in the app). Falls back to a text wordmark. */
+  /** Trusted logo markup for the top-left slot (planLogoHtml in the app). Falls back to the CCDesigner logo image. */
   logoHtml?: string;
 }
 
@@ -785,7 +793,6 @@ export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string 
 .rx-doc a{color:var(--rx-teal);font-weight:700}
 .rx-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--rx-gold);padding-bottom:10px;margin-bottom:14px}
 .rx-logo-slot{min-height:40px;min-width:160px;display:flex;align-items:center}
-.rx-wordmark{font-weight:800;letter-spacing:.2em;font-size:16px;color:#111}
 .rx-phase{font-size:13px;font-weight:700;color:var(--rx-accent);text-transform:uppercase;text-align:right}
 .rx-kicker{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--rx-accent);text-transform:uppercase;margin:0 0 4px}
 .rx-title{font-size:30px;font-weight:800;line-height:1.15;margin:0}
@@ -837,8 +844,8 @@ export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string 
 @media print{
   @page{size:A4;margin:14mm 14mm 16mm 14mm;
     @top-right{content:"${cssText(t.headerPhase)} ${cssText(subject)}  |  TEACHING RESOURCE";font-size:13px;font-weight:700;color:${t.accent}}
-    @bottom-left{content:"© Rhythmstix 2026";font-size:13px;color:#555}
-    @bottom-center{content:"www.rhythmstix.co.uk";font-size:13px;color:#1F7A70}
+    @bottom-left{content:"${PLAN_FOOTER_COPYRIGHT()}";font-size:13px;color:#555}
+    @bottom-center{content:"${PLAN_FOOTER_SITE}";font-size:13px;color:#1F7A70}
     @bottom-right{content:"Page " counter(page);font-size:13px;color:#555}}
   @page:first{@top-right{content:none}}
   html,body{background:#fff !important}
@@ -864,7 +871,7 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
   parts.push(`<style>${rhythmstixCss(t, doc.subject)}</style>`);
   parts.push(`<div class="rx-doc" data-rx-template="${t.id}">`);
   parts.push(
-    `<header class="rx-head"><div class="rx-logo-slot" data-logo-slot="top-left">${opts.logoHtml || '<span class="rx-wordmark">CCDesigner</span>'}</div>` +
+    `<header class="rx-head"><div class="rx-logo-slot" data-logo-slot="top-left">${opts.logoHtml || DEFAULT_LOGO_HTML}</div>` +
       `<div class="rx-phase">${escapeText(t.headerPhase)} ${subjectUpper} &nbsp;|&nbsp; TEACHING RESOURCE</div></header>`,
   );
   // Kicker as in the examples: KS3–KS5 say "LESSON PLAN • ILLUSTRATIVE TEMPLATE".
@@ -977,7 +984,7 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
     }${doc.sourceLinks.length ? `<div class="rx-links">${doc.sourceLinks.map(link).join('<br>')}</div>` : ''}</div>`,
   );
   parts.push(`</section>`);
-  parts.push(`<footer class="rx-foot"><span>© Rhythmstix 2026</span><span>www.rhythmstix.co.uk</span><span></span></footer>`);
+  parts.push(`<footer class="rx-foot"><span>${PLAN_FOOTER_COPYRIGHT()}</span><span>${PLAN_FOOTER_SITE}</span><span></span></footer>`);
   parts.push(`</div>`);
   return parts.join('');
 }

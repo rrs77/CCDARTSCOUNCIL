@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+import { planLogoHtml } from '../utils/planLogo';
+
+const escapeShareText = (v: string) =>
+  String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { customObjectivesApi } from '../config/customObjectivesApi';
@@ -139,13 +143,14 @@ export function useShareLesson() {
     const shouldShowCustom = hasCustomObjectives;
     const shouldShowEyfs = hasEyfsObjectives && !hasCustomObjectives;
 
-    const headerTitle = lessonData.customHeader || `Lesson ${termSpecificNumber}, ${halfTermName || 'Autumn 1'} - ${currentSheetInfo.display}, Music`;
+    // The lesson's own title, not a saved print header (customHeader can belong to another lesson's print).
+    const headerTitle = lessonTitle || `Lesson ${termSpecificNumber}, ${halfTermName || 'Autumn 1'} - ${currentSheetInfo.display}`;
     let htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>${lessonTitle}</title>
+        <title>${escapeShareText(lessonTitle)}</title>
         <style>
           /* Utilities used below, inlined so the page never waits on a CDN. */
           .flex{display:flex}.grid{display:grid}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -202,8 +207,9 @@ export function useShareLesson() {
       </head>
       <body>
         <div class="lesson-pdf-content">
+          ${planLogoHtml(30, 'margin:0 0 10px 0;')}
           <div class="lesson-header-teal">
-            <h3>${headerTitle}</h3>
+            <h3>${escapeShareText(headerTitle)}</h3>
             <div class="subtitle">${halfTermName || 'Autumn 1'} - ${currentSheetInfo.display}</div>
             <div class="meta">${currentSheetInfo.display} • ${lessonData.totalTime || 45} mins • ${halfTermName || 'Term 1'}</div>
           </div>
