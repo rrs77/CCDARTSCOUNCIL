@@ -30,6 +30,12 @@ import {
 } from '../utils/yearGroupSectionOrder';
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import type { CustomObjective, CustomObjectiveArea } from '../types/customObjectives';
+import {
+  offlineHelpMeWrite,
+  preferOfflineDemoAi,
+  sleepOfflineThink,
+} from '../utils/planner/offlineDemoAi';
+import { toast } from 'react-hot-toast';
 
 const DURATION_CHIPS = [5, 10, 15, 25] as const;
 
@@ -257,6 +263,7 @@ export function ActivityEditorPage({
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [editingResourceKey, setEditingResourceKey] = useState<string | null>(null);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
+  const [helpMeWriteBusy, setHelpMeWriteBusy] = useState(false);
   const [objectiveMeta, setObjectiveMeta] = useState<{
     objectives: CustomObjective[];
     areas: CustomObjectiveArea[];
@@ -655,12 +662,43 @@ export function ActivityEditorPage({
                 <div className="grow" />
                 <button
                   type="button"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 text-[12px] font-bold text-[#4338E8]"
-                  title="Coming soon"
-                  disabled
+                  className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 text-[13px] font-bold text-[#4338E8] disabled:opacity-60"
+                  title={
+                    preferOfflineDemoAi()
+                      ? 'Offline demo AI — fills this tab locally'
+                      : 'Offline demo AI when the API server is unavailable'
+                  }
+                  disabled={helpMeWriteBusy}
+                  onClick={() => {
+                    void (async () => {
+                      setHelpMeWriteBusy(true);
+                      try {
+                        await sleepOfflineThink();
+                        const html = offlineHelpMeWrite({
+                          title: form.activity,
+                          currentHtml:
+                            textTab === 'introduction' ? form.description : form.activityText,
+                          tab: textTab,
+                          lessonHint: form.unitName || form.teachingUnit,
+                        });
+                        setForm((p) =>
+                          textTab === 'introduction'
+                            ? { ...p, description: html }
+                            : { ...p, activityText: html },
+                        );
+                        toast.success(
+                          preferOfflineDemoAi()
+                            ? 'Help me write applied (offline demo AI)'
+                            : 'Help me write applied (offline demo)',
+                        );
+                      } finally {
+                        setHelpMeWriteBusy(false);
+                      }
+                    })();
+                  }}
                 >
                   <Sparkles className="h-3.5 w-3.5" />
-                  Help me write
+                  {helpMeWriteBusy ? 'Thinking…' : 'Help me write'}
                 </button>
               </div>
               {textTab === 'introduction' ? (

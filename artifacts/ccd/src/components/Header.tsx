@@ -197,6 +197,7 @@ export function Header() {
     : 'No classes in this list yet. Add them in Settings → My classes.';
 
   // If current class is not under a key stage (or not allowed), switch to the first assigned one.
+  // Guard against no-op updates so remapped demo class lists cannot loop setState.
   useEffect(() => {
     if (selectableYearGroups.length === 0) return;
     const currentInList = selectableYearGroups.some(
@@ -204,6 +205,12 @@ export function Header() {
     );
     if (!currentInList) {
       const first = selectableYearGroups[0];
+      if (
+        currentSheetInfo.sheet === first.id &&
+        currentSheetInfo.display === first.name
+      ) {
+        return;
+      }
       setCurrentSheetInfo({ sheet: first.id, display: first.name, eyfs: `${first.id} Statements` });
     }
   }, [selectableYearGroups, currentSheetInfo.sheet, currentSheetInfo.display, setCurrentSheetInfo]);

@@ -304,9 +304,7 @@ export function LessonPlanPanel({
     }
 
     if (res.offlineDemo) {
-      toast('Offline demo applied — start the API server with OPENAI_API_KEY for live AI.', {
-        icon: 'ℹ️',
-      });
+      toast('Offline demo AI applied — no API key used.', { icon: 'ℹ️' });
     }
 
     // Defence in depth: never apply IDs that were not in the Settings list we sent.
@@ -321,6 +319,8 @@ export function LessonPlanPanel({
     let nextSections = sections.map((s) => ({ ...s }));
     let learningOutcome = draft.learningOutcome || '';
     let successCriteria = draft.successCriteria || '';
+    let nextTitle = draft.title || '';
+    let nextVocabulary = draft.vocabulary || '';
 
     const fillOrReplace = (current: string | undefined, next: string, force: boolean) => {
       if (!next) return current || '';
@@ -328,11 +328,42 @@ export function LessonPlanPanel({
       return current || '';
     };
 
+    if (result.lessonTitle) {
+      nextTitle = fillOrReplace(nextTitle, result.lessonTitle, false);
+    }
     if (options.includeOutcomes && result.learningOutcome) {
       learningOutcome = fillOrReplace(learningOutcome, result.learningOutcome, false);
     }
     if (options.includeSuccessCriteria && result.successCriteria) {
       successCriteria = fillOrReplace(successCriteria, result.successCriteria, false);
+    }
+
+    if (result.vocabularyHtml) {
+      nextVocabulary = fillOrReplace(nextVocabulary, result.vocabularyHtml, false);
+      const existingVocab = nextSections.find((s) => s.kind === 'vocabulary');
+      if (existingVocab) {
+        nextSections = nextSections.map((s) =>
+          s.id === existingVocab.id
+            ? {
+                ...s,
+                bodyHtml: fillOrReplace(s.bodyHtml, result.vocabularyHtml!, false),
+                lastWrittenBy: 'ai' as const,
+              }
+            : s,
+        );
+      } else {
+        nextSections = [
+          ...nextSections,
+          {
+            id: uid('sec'),
+            kind: 'vocabulary' as const,
+            title: 'Key vocabulary',
+            bodyHtml: result.vocabularyHtml,
+            lastWrittenBy: 'ai' as const,
+            createdAt: new Date().toISOString(),
+          },
+        ];
+      }
     }
 
     if (options.includeTeacherQuestions) {
@@ -402,11 +433,21 @@ export function LessonPlanPanel({
       nextSections = nextSections.map((s) => {
         const hit = byId.get(s.id);
         if (!hit) return s;
+        const patchedActivity =
+          s.kind === 'activity' && s.activity
+            ? {
+                ...s.activity,
+                description: hit.bodyHtml || s.activity.description,
+                activityText: s.activity.activityText || hit.bodyHtml,
+                time: hit.durationMins ?? s.activity.time,
+              }
+            : s.activity;
         return {
           ...s,
           title: hit.title || s.title,
           durationMins: hit.durationMins ?? s.durationMins,
           bodyHtml: hit.bodyHtml,
+          activity: patchedActivity,
           lastWrittenBy: 'ai' as const,
         };
       });
@@ -417,6 +458,43 @@ export function LessonPlanPanel({
           ? { ...s, bodyHtml: body.bodyHtml, lastWrittenBy: 'ai' as const }
           : s,
       );
+    }
+
+    // Offline demo: suggest/add activities when the plan has few or none.
+    if (result.suggestedActivities?.length) {
+      const stamped = new Date().toISOString();
+      for (const sug of result.suggestedActivities) {
+        const activity: Activity = {
+          _id: uid('act'),
+          activity: sug.title,
+          description: sug.description,
+          activityText: sug.activityText,
+          time: sug.durationMins,
+          category: sug.category,
+          level: yearGroup || '',
+          yearGroups: yearGroup ? [yearGroup] : [],
+          teachingUnit: draft.lessonName || nextTitle || '',
+          unitName: draft.lessonName || '',
+          lessonNumber: '',
+          videoLink: '',
+          musicLink: '',
+          backingLink: '',
+          resourceLink: '',
+          link: '',
+          vocalsLink: '',
+          imageLink: '',
+        };
+        nextSections.push({
+          id: uid('activity'),
+          kind: 'activity',
+          title: sug.title,
+          bodyHtml: `${sug.description}<p><em>Teacher cue:</em> ${sug.teacherCues}</p>`,
+          activity,
+          durationMins: sug.durationMins,
+          lastWrittenBy: 'ai',
+          createdAt: stamped,
+        });
+      }
     }
 
     let customObjectives = draft.customObjectives || [];
@@ -444,6 +522,8 @@ export function LessonPlanPanel({
     const history = [...prevAi.history.slice(0, prevAi.historyIndex + 1), turn].slice(-20);
     setDraft({
       ...draft,
+      title: nextTitle,
+      vocabulary: nextVocabulary,
       sections: nextSections,
       learningOutcome,
       successCriteria,
@@ -1004,7 +1084,8 @@ function FleshOutPanel({
     includeTeacherQuestions: true,
     includeDifferentiation: true,
     autoPickCurriculum: false,
-    wholeLesson: false,
+    // Default on so one Apply fills timings, cues, vocab and can suggest activities offline.
+    wholeLesson: true,
   });
 
   useEffect(() => {

@@ -1,38 +1,48 @@
 import React, { useEffect, useId, useState } from 'react';
-import { X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import {
+  offlinePolishBodies,
+  preferOfflineDemoAi,
+  sleepOfflineThink,
+} from '../../utils/planner/offlineDemoAi';
 
 export type PolishSuggestionId = 'sequence' | 'objectives' | 'differentiation';
 
-export const POLISH_SUGGESTIONS: {
+export function polishSuggestionsFor(lessonTitle?: string): {
   id: PolishSuggestionId;
   title: string;
   body: string;
   defaultOn: boolean;
-}[] = [
-  {
-    id: 'sequence',
-    title: 'Improve the learning sequence',
-    body: 'Move from a playful warm-up to practical exploration, a shared performance and a short reflection.',
-    defaultOn: true,
-  },
-  {
-    id: 'objectives',
-    title: 'Make the success statements clearer',
-    body: 'Use concise, child-friendly “I can…” statements linked to the learning taking place.',
-    defaultOn: true,
-  },
-  {
-    id: 'differentiation',
-    title: 'Offer differentiation ideas',
-    body: 'Add a scaffold for new learners and a creative extension for pupils ready for more.',
-    defaultOn: false,
-  },
-];
+}[] {
+  const canned = offlinePolishBodies(lessonTitle);
+  return [
+    {
+      id: 'sequence',
+      title: 'Improve the learning sequence',
+      body: canned.sequence.replace(/^Polish · sequence:\s*/i, ''),
+      defaultOn: true,
+    },
+    {
+      id: 'objectives',
+      title: 'Make the success statements clearer',
+      body: canned.objectives.replace(/^Polish · success:\s*/i, ''),
+      defaultOn: true,
+    },
+    {
+      id: 'differentiation',
+      title: 'Offer differentiation ideas',
+      body: canned.differentiation.replace(/^Polish · inclusion:\s*/i, ''),
+      defaultOn: false,
+    },
+  ];
+}
+
+export const POLISH_SUGGESTIONS = polishSuggestionsFor();
 
 /**
- * Preview-only Polish with AI UX. No model calls / token spend.
- * On accept, callers apply scripted suggestions to the open lesson draft only.
+ * Polish with AI — live path unchanged for real users with API;
+ * offline/demo applies scripted suggestions into the lesson draft (with a short think delay).
  */
 export function PolishWithAIModal({
   open,
@@ -44,14 +54,17 @@ export function PolishWithAIModal({
   lessonTitle?: string;
   onClose: () => void;
   /** Called with the selected suggestion ids when the teacher confirms. */
-  onAccept: (ids: PolishSuggestionId[]) => void;
+  onAccept: (ids: PolishSuggestionId[]) => void | Promise<void>;
 }) {
   const titleId = useId();
+  const suggestions = polishSuggestionsFor(lessonTitle);
   const [selected, setSelected] = useState<Record<PolishSuggestionId, boolean>>({
     sequence: true,
     objectives: true,
     differentiation: false,
   });
+  const [busy, setBusy] = useState(false);
+  const offline = preferOfflineDemoAi();
 
   useEffect(() => {
     if (!open) return;
@@ -60,6 +73,7 @@ export function PolishWithAIModal({
       objectives: true,
       differentiation: false,
     });
+    setBusy(false);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -69,17 +83,25 @@ export function PolishWithAIModal({
 
   if (!open) return null;
 
-  const accept = () => {
-    const ids = POLISH_SUGGESTIONS.map((s) => s.id).filter((id) => selected[id]);
+  const accept = async () => {
+    const ids = suggestions.map((s) => s.id).filter((id) => selected[id]);
     if (ids.length === 0) {
       toast('Select at least one suggestion, or keep the original.');
       return;
     }
-    onAccept(ids);
-    onClose();
-    toast.success(
-      `Applied ${ids.length} polish suggestion${ids.length === 1 ? '' : 's'} to this draft (preview — no AI call).`,
-    );
+    setBusy(true);
+    try {
+      await sleepOfflineThink();
+      await onAccept(ids);
+      onClose();
+      toast.success(
+        offline
+          ? `Applied ${ids.length} polish suggestion${ids.length === 1 ? '' : 's'} (offline demo AI).`
+          : `Applied ${ids.length} polish suggestion${ids.length === 1 ? '' : 's'} to this draft.`,
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -93,8 +115,11 @@ export function PolishWithAIModal({
       >
         <div className="flex items-start justify-between gap-3 px-6 pb-3 pt-6">
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-wide text-[var(--ss-indigo,#4338E8)]">
-              ✦ Polish with AI · design preview
+            <p className="text-[13px] font-extrabold uppercase tracking-wide text-[var(--ss-indigo,#4338E8)]">
+              <span className="inline-flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" aria-hidden />
+                {offline ? 'Polish with AI · offline demo' : 'Polish with AI'}
+              </span>
             </p>
             <h2
               id={titleId}
@@ -119,7 +144,7 @@ export function PolishWithAIModal({
           </button>
         </div>
         <div className="space-y-3 px-6 pb-6">
-          {POLISH_SUGGESTIONS.map((row) => (
+          {suggestions.map((row) => (
             <label
               key={row.id}
               className="flex cursor-pointer items-start gap-3 rounded-[13px] border border-[#ded9ff] bg-[#f7f6ff] p-4"
@@ -129,31 +154,36 @@ export function PolishWithAIModal({
                 checked={selected[row.id]}
                 onChange={(e) => setSelected((s) => ({ ...s, [row.id]: e.target.checked }))}
                 className="mt-1 accent-[var(--ss-indigo,#4338E8)]"
+                disabled={busy}
               />
               <span>
                 <strong className="block text-[13px] text-[var(--ss-ink,#1F1B4D)]">{row.title}</strong>
-                <span className="mt-1 block text-[12px] leading-relaxed text-[#726d99]">{row.body}</span>
+                <span className="mt-1 block text-[13px] leading-relaxed text-[#726d99]">{row.body}</span>
               </span>
             </label>
           ))}
-          <p className="text-[10px] text-[var(--ss-muted,#77738F)]">
-            No AI service is called and no tokens are spent. Suggestions never change Hub attribution, licences, resource
-            text, or timetable dates.
+          <p className="text-[13px] text-[var(--ss-muted,#77738F)]">
+            {offline
+              ? 'Offline demo AI — no network call and no tokens. Suggestions never change Hub attribution, licences, or timetable dates.'
+              : 'Suggestions never change Hub attribution, licences, resource text, or timetable dates.'}
           </p>
           <div className="flex flex-wrap justify-end gap-2 pt-2">
             <button
               type="button"
-              className="inline-flex h-10 items-center rounded-xl border border-[var(--ss-line,#E2E0EF)] bg-white px-4 text-xs font-bold text-[var(--ss-ink,#1F1B4D)]"
+              className="inline-flex h-10 items-center rounded-xl border border-[var(--ss-line,#E2E0EF)] bg-white px-4 text-[13px] font-bold text-[var(--ss-ink,#1F1B4D)]"
               onClick={onClose}
+              disabled={busy}
             >
               Keep original
             </button>
             <button
               type="button"
-              className="inline-flex h-10 items-center rounded-xl bg-[var(--ss-indigo,#4338E8)] px-4 text-xs font-bold text-white"
-              onClick={accept}
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[var(--ss-indigo,#4338E8)] px-4 text-[13px] font-bold text-white disabled:opacity-60"
+              onClick={() => void accept()}
+              disabled={busy}
             >
-              Accept selected suggestions
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              {busy ? 'Thinking…' : 'Accept selected suggestions'}
             </button>
           </div>
         </div>
@@ -162,23 +192,12 @@ export function PolishWithAIModal({
   );
 }
 
-/** Scripted draft patches — used until a real AI endpoint is approved. */
-export function buildPolishNotePatches(ids: PolishSuggestionId[]): string[] {
+/** Scripted draft patches — used for offline demo and until a live polish endpoint is approved. */
+export function buildPolishNotePatches(ids: PolishSuggestionId[], lessonTitle?: string): string[] {
+  const canned = offlinePolishBodies(lessonTitle);
   const parts: string[] = [];
-  if (ids.includes('sequence')) {
-    parts.push(
-      'Polish · sequence: Warm-up → explore → share/perform → short reflection. Reorder activities in the builder if needed (drag and drop still works).',
-    );
-  }
-  if (ids.includes('objectives')) {
-    parts.push(
-      'Polish · success: Prefer clear “I can…” statements tied to what pupils actually do in this lesson.',
-    );
-  }
-  if (ids.includes('differentiation')) {
-    parts.push(
-      'Polish · inclusion: Scaffold for new learners; offer a creative extension for those ready for more.',
-    );
-  }
+  if (ids.includes('sequence')) parts.push(canned.sequence);
+  if (ids.includes('objectives')) parts.push(canned.objectives);
+  if (ids.includes('differentiation')) parts.push(canned.differentiation);
   return parts;
 }

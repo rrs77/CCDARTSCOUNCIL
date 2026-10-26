@@ -129,7 +129,10 @@ export function ActivityDetails({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Initialize edited activity when the component mounts or activity changes
+  // Initialize edited activity when the component mounts or activity identity/content changes.
+  // Compare a stable key so unstable parent object identity cannot loop setState every render
+  // ("Maximum update depth exceeded").
+  const activitySyncKey = `${activity.id || activity._id || ''}|${activity.activity || ''}|${activity.category || ''}|${activity.time ?? ''}|${Array.isArray(activity.yearGroups) ? activity.yearGroups.join(',') : activity.level || ''}|${(activity.description || '').length}|${(activity.activityText || '').length}|${(activity.standards || activity.eyfsStandards || []).join(',')}`;
   useEffect(() => {
     const normalizedActivity = {
       ...activity,
@@ -142,7 +145,8 @@ export function ActivityDetails({
     // Only allow edit mode if onUpdate is provided and isEditing is true
     setIsEditMode(isLessonBuilderContext ? initialEditMode : (isEditing && !isReadOnly));
     setHasUnsavedChanges(false);
-  }, [activity, isEditing, isReadOnly, isLessonBuilderContext, initialEditMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- activitySyncKey captures meaningful activity fields
+  }, [activitySyncKey, isEditing, isReadOnly, isLessonBuilderContext, initialEditMode]);
 
   // Track changes to edited activity
   useEffect(() => {
